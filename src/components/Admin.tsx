@@ -81,6 +81,7 @@ export function Admin({ onBack }: AdminProps) {
         borderColor='rgba(139, 92, 246, 0.08)'
         hoverFillColor='rgba(139, 92, 246, 0.05)'
         className="absolute inset-0"
+        pageSection="admin"
       />
       <div className="relative z-10 max-w-7xl mx-auto">
         <motion.div

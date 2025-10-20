@@ -1,5 +1,6 @@
 import { useRef, useEffect } from 'react';
 import './Squares.css';
+import { supabase } from '../lib/supabase';
 
 const Squares = ({
   direction = 'right',
@@ -7,7 +8,8 @@ const Squares = ({
   borderColor = '#999',
   squareSize = 40,
   hoverFillColor = '#222',
-  className = ''
+  className = '',
+  pageSection = 'general'
 }) => {
   const canvasRef = useRef(null);
   const requestRef = useRef(null);
@@ -15,6 +17,9 @@ const Squares = ({
   const numSquaresY = useRef();
   const gridOffset = useRef({ x: 0, y: 0 });
   const hoveredSquare = useRef(null);
+  const viewStartTime = useRef(Date.now());
+  const hoverCount = useRef(0);
+  const lastHoveredSquare = useRef(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -113,6 +118,12 @@ const Squares = ({
         hoveredSquare.current.y !== hoveredSquareY
       ) {
         hoveredSquare.current = { x: hoveredSquareX, y: hoveredSquareY };
+
+        const squareKey = `${hoveredSquareX},${hoveredSquareY}`;
+        if (lastHoveredSquare.current !== squareKey) {
+          hoverCount.current += 1;
+          lastHoveredSquare.current = squareKey;
+        }
       }
     };
 
@@ -120,18 +131,59 @@ const Squares = ({
       hoveredSquare.current = null;
     };
 
+    const trackInteraction = async (type) => {
+      const duration = Math.floor((Date.now() - viewStartTime.current) / 1000);
+
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+
+        await supabase.from('squares_interactions').insert({
+          user_id: user?.id || null,
+          page_section: pageSection,
+          interaction_type: type,
+          duration_seconds: duration,
+          square_count: hoverCount.current
+        });
+      } catch (error) {
+        console.error('Failed to track interaction:', error);
+      }
+    };
+
     canvas.addEventListener('mousemove', handleMouseMove);
     canvas.addEventListener('mouseleave', handleMouseLeave);
 
     requestRef.current = requestAnimationFrame(updateAnimation);
+
+    trackInteraction('view');
+
+    const handleBeforeUnload = () => {
+      if (hoverCount.current > 0) {
+        trackInteraction('hover');
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    const trackingInterval = setInterval(() => {
+      if (hoverCount.current > 5) {
+        trackInteraction('hover');
+        hoverCount.current = 0;
+      }
+    }, 30000);
 
     return () => {
       window.removeEventListener('resize', resizeCanvas);
       cancelAnimationFrame(requestRef.current);
       canvas.removeEventListener('mousemove', handleMouseMove);
       canvas.removeEventListener('mouseleave', handleMouseLeave);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      clearInterval(trackingInterval);
+
+      if (hoverCount.current > 0) {
+        trackInteraction('hover');
+      }
     };
-  }, [direction, speed, borderColor, hoverFillColor, squareSize]);
+  }, [direction, speed, borderColor, hoverFillColor, squareSize, pageSection]);
 
   return <canvas ref={canvasRef} className={`squares-canvas ${className}`}></canvas>;
 };

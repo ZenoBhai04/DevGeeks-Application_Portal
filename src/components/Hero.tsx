@@ -17,6 +17,7 @@ export function Hero() {
           borderColor='rgba(6, 182, 212, 0.15)'
           hoverFillColor='rgba(6, 182, 212, 0.1)'
           className="absolute inset-0"
+          pageSection="hero"
         />
         <video
           autoPlay

@@ -69,6 +69,7 @@ function App() {
           borderColor='rgba(6, 182, 212, 0.12)'
           hoverFillColor='rgba(6, 182, 212, 0.08)'
           className="absolute inset-0"
+          pageSection="loading"
         />
         <div className="relative z-10 text-center">
           <div className="w-16 h-16 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>

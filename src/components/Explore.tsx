@@ -53,6 +53,7 @@ export function Explore({ jobs, onApply }: ExploreProps) {
         borderColor='rgba(59, 130, 246, 0.1)'
         hoverFillColor='rgba(59, 130, 246, 0.08)'
         className="absolute inset-0"
+        pageSection="explore"
       />
 
       <div className="relative z-10 max-w-7xl mx-auto">
